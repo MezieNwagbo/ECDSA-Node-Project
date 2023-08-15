@@ -1,7 +1,17 @@
 import { useState } from "react";
+import { secp256k1 } from "ethereum-cryptography/secp256k1.js";
+import { keccak256 } from "ethereum-cryptography/keccak.js";
+import { utf8ToBytes } from "ethereum-cryptography/utils.js";
+import { toHex } from "ethereum-cryptography/utils.js";
 import server from "./server";
 
-function Transfer({ address, setBalance }) {
+function Transfer({
+  address,
+  publicKey,
+  setBalance,
+  privateKey,
+  setErrorMessage,
+}) {
   const [sendAmount, setSendAmount] = useState("");
   const [recipient, setRecipient] = useState("");
 
@@ -11,16 +21,44 @@ function Transfer({ address, setBalance }) {
     evt.preventDefault();
 
     try {
+      //message = amount
+      // hash message(convert to bytes first), (an object {sender, amount, recipient})
+      const amountHash = keccak256(utf8ToBytes(sendAmount));
+
+      //sign message
+      const signature = secp256k1.sign(amountHash, privateKey);
+
+      const jsonString = JSON.stringify(signature, (key, value) => {
+        if (typeof value === "bigint") {
+          return value.toString(); // Convert BigInt values to strings
+        }
+        return value; // Return other values as is
+      });
+
+      const messageBody = {
+        sender: address,
+        publicKey,
+        amount: parseInt(sendAmount),
+        signature: jsonString,
+        recipient,
+        amountHash,
+      };
+
+      console.log("transaction sent");
+      console.log(typeof publicKey);
+      // console.log(jsonString);
+
       const {
         data: { balance },
-      } = await server.post(`send`, {
-        sender: address,
-        amount: parseInt(sendAmount),
-        recipient,
-      });
+      } = await server.post(`send`, messageBody);
       setBalance(balance);
-    } catch (ex) {
-      alert(ex.response.data.message);
+    } catch (error) {
+      // alert(ex.response.data.message);
+      console.log(error.response.data.message);
+      setErrorMessage(error.response.data.message);
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 5000);
     }
   }
 
