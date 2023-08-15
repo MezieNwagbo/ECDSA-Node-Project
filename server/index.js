@@ -3,9 +3,6 @@ const app = express();
 const cors = require("cors");
 const port = 3042;
 const { secp256k1 } = require("ethereum-cryptography/secp256k1");
-const { keccak256 } = require("ethereum-cryptography/keccak");
-const { toHex } = require("ethereum-cryptography/utils");
-const { utf8ToBytes } = require("ethereum-cryptography/utils");
 
 app.use(cors());
 app.use(express.json());
@@ -24,11 +21,6 @@ app.get("/balance/:address", (req, res) => {
 });
 
 app.post("/send", (req, res) => {
-  //recover public key
-  //recover address
-  //if address is valid continue
-  //if address is not valid return
-
   const { sender, publicKey, recipient, amount, amountHash, signature } =
     req.body;
 

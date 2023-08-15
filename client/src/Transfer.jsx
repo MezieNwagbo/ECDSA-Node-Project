@@ -21,8 +21,6 @@ function Transfer({
     evt.preventDefault();
 
     try {
-      //message = amount
-      // hash message(convert to bytes first), (an object {sender, amount, recipient})
       const amountHash = keccak256(utf8ToBytes(sendAmount));
 
       //sign message
